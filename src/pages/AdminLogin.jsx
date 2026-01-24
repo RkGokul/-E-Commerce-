@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -10,8 +10,6 @@ const AdminLogin = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -33,9 +31,9 @@ const AdminLogin = () => {
 
     try {
       setLoading(true);
-      console.log('Attempting login with API_URL:', API_URL);
+      console.log('Attempting login...');
 
-      const response = await axios.post(`${API_URL}/api/auth/login`, {
+      const response = await api.post('/auth/login', {
         email: formData.email,
         password: formData.password,
       });

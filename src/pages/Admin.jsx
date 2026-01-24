@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -19,7 +19,6 @@ const Admin = () => {
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -44,7 +43,7 @@ const Admin = () => {
       const allProducts = {};
 
       for (const cat of categories) {
-        const response = await axios.get(`${API_URL}/api/products?category=${cat}`);
+        const response = await api.get(`/products?category=${cat}`);
         allProducts[cat] = response.data.data || [];
       }
 
@@ -135,18 +134,16 @@ const Admin = () => {
 
       if (editingId) {
         // Update product
-        await axios.put(
-          `${API_URL}/api/products/${editingId}`,
-          productData,
-          { headers: { Authorization: `Bearer ${token}` } }
+        await api.put(
+          `/products/${editingId}`,
+          productData
         );
         alert('Product updated successfully!');
       } else {
         // Add new product
-        await axios.post(
-          `${API_URL}/api/products`,
-          productData,
-          { headers: { Authorization: `Bearer ${token}` } }
+        await api.post(
+          `/products`,
+          productData
         );
         alert('Product added successfully!');
       }
@@ -193,9 +190,7 @@ const Admin = () => {
 
     try {
       setLoading(true);
-      await axios.delete(`${API_URL}/api/products/${productId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.delete(`/products/${productId}`);
       alert('Product deleted successfully!');
       await fetchProducts();
     } catch (error) {
