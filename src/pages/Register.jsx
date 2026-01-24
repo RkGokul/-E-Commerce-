@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { register, clearError } from '../store/slices/authSlice';
@@ -8,6 +8,11 @@ const Register = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { loading, error } = useSelector((state) => state.auth);
+
+    // Clear error on component mount
+    useEffect(() => {
+        dispatch(clearError());
+    }, [dispatch]);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -61,7 +66,7 @@ const Register = () => {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
                         {/* Name Field */}
                         <div className="space-y-2">
                             <label htmlFor="name" className="block text-sm font-medium text-gray-700">
@@ -78,6 +83,7 @@ const Register = () => {
                                     name="name"
                                     type="text"
                                     required
+                                    autoComplete="off"
                                     value={formData.name}
                                     onChange={handleChange}
                                     className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] sm:text-sm"
@@ -102,6 +108,7 @@ const Register = () => {
                                     name="email"
                                     type="email"
                                     required
+                                    autoComplete="off"
                                     value={formData.email}
                                     onChange={handleChange}
                                     className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] sm:text-sm"
@@ -126,6 +133,7 @@ const Register = () => {
                                     name="password"
                                     type={showPassword ? "text" : "password"}
                                     required
+                                    autoComplete="new-password"
                                     value={formData.password}
                                     onChange={handleChange}
                                     className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] sm:text-sm"
@@ -160,6 +168,7 @@ const Register = () => {
                                     name="confirmPassword"
                                     type="password"
                                     required
+                                    autoComplete="new-password"
                                     value={formData.confirmPassword}
                                     onChange={handleChange}
                                     className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] sm:text-sm"

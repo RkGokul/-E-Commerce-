@@ -58,7 +58,7 @@ const Home = () => {
                 <div className="container relative z-10 text-center px-4">
                     <div className="fade-in-up">
                         <span className="block text-[#D4AF37] uppercase tracking-[0.2em] text-sm font-bold mb-4">
-                            Discover Spa Jewels
+                            Discover Sp Jewels
                         </span>
                         <h1 className="text-5xl md:text-7xl font-serif text-white mb-6 leading-tight">
                             Timeless Beauty, <br />

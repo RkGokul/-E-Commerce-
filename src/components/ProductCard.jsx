@@ -14,15 +14,22 @@ const ProductCard = ({ product }) => {
                 </Link>
 
                 {/* Overlay Tags */}
-                {product.featured && (
-                    <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-dark text-xs px-3 py-1 uppercase tracking-wider font-bold z-10">
-                        Featured
+                {product.originalPrice && product.originalPrice > product.price && (
+                    <span className="absolute top-3 left-3 bg-[#411516] text-[#E7C5C6] text-[10px] px-2 py-1 uppercase tracking-wider font-bold z-10 rounded">
+                        {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                    </span>
+                )}
+
+                {/* New Arrival Badge */}
+                {product.isNewArrival && (
+                    <span className="absolute top-3 right-3 bg-green-600 text-white text-[10px] px-2 py-1 uppercase tracking-wider font-bold z-10 rounded">
+                        NEW ARRIVAL
                     </span>
                 )}
 
                 {/* Wishlist Button */}
-                <div className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <WishlistButton productId={product._id} />
+                <div className="absolute top-12 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <WishlistButton product={product} />
                 </div>
 
                 {/* Quick Action Overlay */}
@@ -32,7 +39,7 @@ const ProductCard = ({ product }) => {
                     to={`/products/${product._id}`}
                     className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md py-3 text-center text-dark text-xs font-bold uppercase tracking-widest translate-y-full group-hover:translate-y-0 transition-transform duration-300 hover:bg-gold hover:text-dark"
                 >
-                    View Details
+                    View Cart
                 </Link>
             </div>
 
@@ -44,15 +51,21 @@ const ProductCard = ({ product }) => {
                     {product.name}
                 </h3>
                 <div className="flex items-center justify-center gap-2">
-                    <span className="text-dark font-medium">
+                    <span className="text-dark font-bold">
                         ₹{product.price.toLocaleString()}
                     </span>
-                    {product.ratings?.average > 0 && (
-                        <span className="text-gray-400 text-sm flex items-center">
-                            ★ {product.ratings.average.toFixed(1)}
+                    {product.originalPrice && (
+                        <span className="text-gray-400 text-sm line-through">
+                            ₹{product.originalPrice.toLocaleString()}
                         </span>
                     )}
                 </div>
+                {product.ratings?.average > 0 && (
+                    <div className="flex items-center justify-center mt-1 text-gold">
+                        <span className="text-xs font-bold mr-1">{product.ratings.average.toFixed(1)}</span>
+                        <span className="text-[10px] text-gray-400">({product.ratings.count})</span>
+                    </div>
+                )}
             </Link>
         </div>
     );

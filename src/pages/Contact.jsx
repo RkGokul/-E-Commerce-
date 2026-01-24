@@ -194,7 +194,7 @@ const Contact = () => {
               <InfoCard
                 icon={<Mail className="text-[#C9891E]" size={18} />}
                 title="Email Us"
-                lines={["support@elegance.com", "orders@elegance.com"]}
+                lines={["spajewels.co.@gmail.com"]}
               />
               <InfoCard
                 icon={<Clock className="text-[#C9891E]" size={18} />}
@@ -226,13 +226,13 @@ const Contact = () => {
             </div>
 
             {/* MAP BOX */}
-            <div className="rounded-xl bg-[#EDE8E4] flex flex-col items-center justify-center py-12 shadow-md border border-gray-300\">
+            {/* <div className="rounded-xl bg-[#EDE8E4] flex flex-col items-center justify-center py-12 shadow-md border border-gray-300\">
             <MapPin className="text-gray-500 mb-1" size={26} />
             <p className="font-medium text-gray-700 text-sm">Map Location</p>
             <p className="text-xs text-gray-600 mt-1">
               123 Elegance Street, Mumbai
             </p>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

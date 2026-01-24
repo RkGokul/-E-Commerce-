@@ -19,24 +19,48 @@ const Products = () => {
     });
 
     useEffect(() => {
-        const category = searchParams.get('category');
-        if (category) {
-            dispatch(setFilters({ category }));
-            dispatch(fetchProducts({ category }));
-        }
+        const category = searchParams.get('category') || '';
+        const search = searchParams.get('search') || '';
+
+        // Sync local filters with URL params
+        setLocalFilters(prev => ({
+            ...prev,
+            category,
+            search
+        }));
+
+        // Dispatch to store to trigger fetch
+        dispatch(setFilters({ category, search }));
     }, [searchParams, dispatch]);
 
     useEffect(() => {
         dispatch(fetchProducts(filters));
     }, [dispatch, filters]);
 
+    // Automatic Search logic (Debounce)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (localFilters.search !== filters.search) {
+                applyFilters();
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [localFilters.search]);
+
     const handleFilterChange = (key, value) => {
         setLocalFilters((prev) => ({ ...prev, [key]: value }));
     };
 
-    const applyFilters = () => {
-        dispatch(setFilters(localFilters));
-        dispatch(fetchProducts(localFilters));
+    const applyFilters = (filtersToApply = localFilters) => {
+        dispatch(setFilters(filtersToApply));
+        dispatch(fetchProducts(filtersToApply));
+    };
+
+    const handleSearchKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            applyFilters();
+        }
     };
 
     const clearAllFilters = () => {
@@ -59,26 +83,38 @@ const Products = () => {
         <div className="min-h-screen py-8 bg-[#F9F5F0]">
             <div className="container">
                 {/* Header Section */}
-               
+
 
                 {/* Top Controls Bar - Modern Design */}
                 <div className="mb-10">
                     <div className="flex flex-col md:flex-row gap-4">
                         {/* Search Bar */}
                         <div className="flex-grow">
-                            <div className="relative group">
-                                <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <svg className="h-5 w-5 text-[#DAA520]" viewBox="0 0 20 20" fill="currentColor">
+                            <div className="relative group flex gap-2">
+                                <div className="relative flex-grow">
+                                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <svg className="h-5 w-5 text-[#DAA520]" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                                        </svg>
+                                    </span>
+                                    <input
+                                        type="text"
+                                        value={localFilters.search}
+                                        onChange={(e) => handleFilterChange('search', e.target.value)}
+                                        onKeyDown={handleSearchKeyDown}
+                                        placeholder="Search products... (jewelry, sarees, etc.)"
+                                        className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520] focus:ring-opacity-20 transition-all font-sans text-sm hover:border-gray-300"
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => applyFilters()}
+                                    className="bg-[#DAA520] text-white px-6 py-3.5 rounded-xl font-bold text-sm shadow-md hover:shadow-lg hover:bg-gold-hover transition-all flex items-center gap-2"
+                                >
+                                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                         <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
                                     </svg>
-                                </span>
-                                <input
-                                    type="text"
-                                    value={localFilters.search}
-                                    onChange={(e) => handleFilterChange('search', e.target.value)}
-                                    placeholder="Search products... (jewelry, sarees, etc.)"
-                                    className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520] focus:ring-opacity-20 transition-all font-sans text-sm hover:border-gray-300"
-                                />
+                                    Search
+                                </button>
                             </div>
                         </div>
 
@@ -89,15 +125,11 @@ const Products = () => {
                                     value={localFilters.sort}
                                     onChange={(e) => {
                                         handleFilterChange('sort', e.target.value);
-                                        setTimeout(() => {
-                                            dispatch(setFilters({ sort: e.target.value }));
-                                            dispatch(fetchProducts({ ...localFilters, sort: e.target.value }));
-                                        }, 0);
+                                        applyFilters({ ...localFilters, sort: e.target.value });
                                     }}
                                     className="w-full px-4 py-3.5 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520] focus:ring-opacity-20 transition-all font-sans text-sm appearance-none cursor-pointer hover:border-gray-300"
                                     style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23DAA520' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: `right 0.75rem center`, backgroundRepeat: `no-repeat`, backgroundSize: `1.5em 1.5em`, paddingRight: '2.5rem' }}
                                 >
-                                    <option value="newest">🔥 Featured</option>
                                     <option value="newest">✨ Newest Arrivals</option>
                                     <option value="price-asc">📉 Price: Low to High</option>
                                     <option value="price-desc">📈 Price: High to Low</option>
@@ -109,11 +141,10 @@ const Products = () => {
                         {/* Filters Toggle Button */}
                         <button
                             onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-                            className={`px-6 py-3.5 rounded-xl font-bold text-sm transition-all duration-200 focus:outline-none flex items-center justify-center gap-2 shadow-md hover:shadow-lg ${
-                                isFiltersOpen 
-                                    ? 'bg-[#DAA520] text-white' 
-                                    : 'bg-white text-[#DAA520] border-2 border-[#DAA520] hover:bg-[#DAA520] hover:text-white'
-                            }`}
+                            className={`px-6 py-3.5 rounded-xl font-bold text-sm transition-all duration-200 focus:outline-none flex items-center justify-center gap-2 shadow-md hover:shadow-lg ${isFiltersOpen
+                                ? 'bg-[#DAA520] text-white'
+                                : 'bg-white text-[#DAA520] border-2 border-[#DAA520] hover:bg-[#DAA520] hover:text-white'
+                                }`}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
@@ -123,7 +154,7 @@ const Products = () => {
                     </div>
 
                     {/* Active Filters Display */}
-                    
+
                 </div>
 
                 {/* Collapsible Filter Section - Modern Design */}
@@ -142,13 +173,10 @@ const Products = () => {
                                     <button
                                         onClick={() => {
                                             handleFilterChange('category', '');
-                                            setTimeout(() => {
-                                                dispatch(setFilters({ category: '' }));
-                                                dispatch(fetchProducts({ ...localFilters, category: '' }));
-                                            }, 0);
+                                            applyFilters({ ...localFilters, category: '' });
                                         }}
-                                        className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 ${localFilters.category === '' 
-                                            ? 'bg-[#DAA520] text-white shadow-md' 
+                                        className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 ${localFilters.category === ''
+                                            ? 'bg-[#DAA520] text-white shadow-md'
                                             : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'}`}
                                     >
                                         <span className="flex items-center gap-2">
@@ -163,13 +191,10 @@ const Products = () => {
                                             key={cat}
                                             onClick={() => {
                                                 handleFilterChange('category', cat);
-                                                setTimeout(() => {
-                                                    dispatch(setFilters({ category: cat }));
-                                                    dispatch(fetchProducts({ ...localFilters, category: cat }));
-                                                }, 0);
+                                                applyFilters({ ...localFilters, category: cat });
                                             }}
-                                            className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 ${localFilters.category === cat 
-                                                ? 'bg-[#DAA520] text-white shadow-md' 
+                                            className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 ${localFilters.category === cat
+                                                ? 'bg-[#DAA520] text-white shadow-md'
                                                 : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'}`}
                                         >
                                             <span className="flex items-center gap-2">
@@ -233,11 +258,10 @@ const Products = () => {
                             </div>
 
                             {/* Action Buttons */}
-                            {/* <div className="flex flex-col justify-between">
-                               
+                            <div className="flex flex-col justify-end">
                                 <div className="flex flex-col gap-3">
                                     <button
-                                        onClick={applyFilters}
+                                        onClick={() => applyFilters()}
                                         className="w-full px-6 py-3 bg-[#DAA520] text-white font-bold rounded-lg hover:bg-[#B8860B] transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
                                     >
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -255,7 +279,7 @@ const Products = () => {
                                         Clear All
                                     </button>
                                 </div>
-                            </div> */}
+                            </div>
                         </div>
                     </div>
                 </div>

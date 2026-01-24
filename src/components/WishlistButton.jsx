@@ -1,21 +1,24 @@
 import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { toggleWishlist } from '../store/slices/wishlistSlice';
+import { Heart } from 'lucide-react';
 
-const WishlistButton = ({ productId, initialLiked = false }) => {
-    const [liked, setLiked] = useState(initialLiked);
+const WishlistButton = ({ product }) => {
+    const dispatch = useDispatch();
+    const items = useSelector((state) => state.wishlist.items);
+    const liked = items.some(item => item._id === product._id);
     const [animating, setAnimating] = useState(false);
 
     const toggleLike = (e) => {
-        e.preventDefault(); // Prevent navigating to product detail if inside a link
+        e.preventDefault();
         e.stopPropagation();
 
-        setLiked(!liked);
+        dispatch(toggleWishlist(product));
+
         if (!liked) {
             setAnimating(true);
             setTimeout(() => setAnimating(false), 1000);
         }
-
-        // In a real app, dispatch to Redux/Backend here
-        console.log(`Toggled wishlist for product ${productId}: ${!liked}`);
     };
 
     return (
@@ -29,18 +32,10 @@ const WishlistButton = ({ productId, initialLiked = false }) => {
             `}
             aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
         >
-            <svg
-                className={`w-6 h-6 transition-all duration-300 ${liked ? 'fill-current' : 'fill-none'}`}
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-            >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                />
-            </svg>
+            <Heart
+                className={`w-5 h-5 transition-all duration-300 ${liked ? 'fill-current' : ''}`}
+                strokeWidth={liked ? 0 : 2}
+            />
         </button>
     );
 };

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { login, clearError } from '../store/slices/authSlice';
@@ -8,6 +8,11 @@ const Login = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { loading, error } = useSelector((state) => state.auth);
+
+    // Clear error on component mount
+    useEffect(() => {
+        dispatch(clearError());
+    }, [dispatch]);
 
     const [formData, setFormData] = useState({
         email: '',
@@ -41,10 +46,10 @@ const Login = () => {
                     <div className="">
                         <div className='mb-10'>
                             <Link to="/Home" className="text-sm text-gray-600 hover:text-gray-900 mb-10  transition-colors font-medium">
-                            <span>&larr;</span> Back to Home
-                        </Link>
+                                <span>&larr;</span> Back to Home
+                            </Link>
                         </div>
-                        
+
                         <h1 className="text-5xl font-serif text-gray-900 mb-3 font-bold">Welcome Back</h1>
                         <p className="text-gray-600 text-base font-light">Sign in to access your account</p>
                     </div>
@@ -55,7 +60,7 @@ const Login = () => {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="grid gap-6">
+                    <form onSubmit={handleSubmit} className="grid gap-6" autoComplete="off">
                         {/* Email Field */}
                         <div>
                             <label htmlFor="email" className="block text-sm font-semibold text-gray-800 mb-2">
@@ -72,6 +77,7 @@ const Login = () => {
                                     name="email"
                                     type="email"
                                     required
+                                    autoComplete="off"
                                     value={formData.email}
                                     onChange={handleChange}
                                     className="block w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent transition-all text-base"
@@ -96,6 +102,7 @@ const Login = () => {
                                     name="password"
                                     type={showPassword ? "text" : "password"}
                                     required
+                                    autoComplete="new-password"
                                     value={formData.password}
                                     onChange={handleChange}
                                     className="block w-full pl-12 pr-12 py-3.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent transition-all text-base"

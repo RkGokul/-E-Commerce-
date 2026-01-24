@@ -1,11 +1,14 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: "https://e-commerce-back-end-k15k.onrender.com/api",
+    // baseURL: "http://localhost:5001/api",
+     baseURL: "https://e-commerce-back-end-k15k.onrender.com/api",
     headers: {
         'Content-Type': 'application/json',
     },
 });
+    // baseURL: "https://e-commerce-back-end-k15k.onrender.com/api",
+
 
 // Add token to requests if available
 api.interceptors.request.use(

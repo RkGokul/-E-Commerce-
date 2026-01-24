@@ -1,13 +1,16 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
+import { Heart } from 'lucide-react';
 import { logout } from '../store/slices/authSlice';
 import { fetchProducts } from '../store/slices/productSlice';
+import { toggleWishlist } from '../store/slices/wishlistSlice';
 import { useState, useEffect, useRef } from 'react';
 
 const Header = () => {
     const { user } = useSelector((state) => state.auth);
     const { items } = useSelector((state) => state.cart);
-    const { products } = useSelector((state) => state.products);
+    const wishlistItems = useSelector((state) => state.wishlist.items);
+    const { products, loading } = useSelector((state) => state.products);
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -20,6 +23,7 @@ const Header = () => {
 
     const handleLogout = () => {
         dispatch(logout());
+        setMobileMenuOpen(false);
         navigate('/login');
     };
 
@@ -95,8 +99,8 @@ const Header = () => {
                 <div className="flex justify-between items-center h-20">
                     {/* Logo */}
                     <Link to="/" className="flex items-center gap-3">
-                        <img src="/spa-jewels-logo.svg" alt="SPA Jewels" className="h-12 w-12 rounded-full" />
-                        <span className="text-2xl font-serif text-gold font-bold tracking-tight">SPA Jewels</span>
+                        <img src="/sp-jewels-logo.png" alt="SP Jewels" className="h-12 w-12 rounded-full" />
+                        <span className="text-2xl font-serif text-gold font-bold tracking-tight">SP Jewels</span>
                     </Link>
 
                     {/* Desktop Navigation */}
@@ -133,6 +137,14 @@ const Header = () => {
                                     <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                                         <p className="text-sm font-medium text-dark">{user.name}</p>
                                     </div>
+                                    {user.isAdmin && (
+                                        <Link
+                                            to="/admin"
+                                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-cream dark:hover:bg-white/5 hover:text-gold transition-colors"
+                                        >
+                                            Admin Dashboard
+                                        </Link>
+                                    )}
                                     <button
                                         onClick={handleLogout}
                                         className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-cream dark:hover:bg-white/5 hover:text-gold transition-colors"
@@ -148,6 +160,75 @@ const Header = () => {
                                 </svg>
                             </Link>
                         )}
+
+                        {/* Wishlist */}
+                        <div className="relative group/wishlist">
+                            <Link to="" className="relative text-dark hover:text-gold transition-colors block p-2">
+                                <Heart className="w-5 h-5" strokeWidth={1.5} />
+                                {wishlistItems.length > 0 && (
+                                    <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                                        {wishlistItems.length}
+                                    </span>
+                                )}
+                            </Link>
+
+                            {/* Wishlist Dropdown */}
+                            <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl py-4 opacity-0 invisible group-hover/wishlist:opacity-100 group-hover/wishlist:visible transition-all duration-300 transform origin-top-right border border-gray-100 overflow-hidden">
+                                <div className="px-4 pb-3 border-b border-gray-50 flex justify-between items-center">
+                                    <h3 className="font-serif font-bold text-gray-900">My Wishlist</h3>
+                                    <span className="text-xs text-gray-400 font-medium">{wishlistItems.length} items</span>
+                                </div>
+                                <div className="max-h-80 overflow-y-auto">
+                                    {wishlistItems.length === 0 ? (
+                                        <div className="p-8 text-center">
+                                            <Heart className="w-10 h-10 text-gray-100 mx-auto mb-3" />
+                                            <p className="text-sm text-gray-400">Your wishlist is empty</p>
+                                        </div>
+                                    ) : (
+                                        wishlistItems.map((item) => (
+                                            <div key={item._id} className="flex items-center gap-3 p-3 hover:bg-[#F9F5F0] transition-colors group/item">
+                                                <Link
+                                                    to={`/products/${item._id}`}
+                                                    className="flex-1 flex items-center gap-3 min-w-0"
+                                                >
+                                                    <img
+                                                        src={item.images?.[0] || item.image || 'https://via.placeholder.com/50'}
+                                                        alt={item.name}
+                                                        className="w-12 h-12 object-cover rounded-md"
+                                                    />
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="text-sm font-bold text-gray-900 truncate">{item.name}</h4>
+                                                        <p className="text-xs text-gold font-bold">₹{item.price?.toLocaleString()}</p>
+                                                    </div>
+                                                </Link>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        dispatch(toggleWishlist(item));
+                                                    }}
+                                                    className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover/item:opacity-100 transition-opacity"
+                                                    title="Remove from wishlist"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                                {wishlistItems.length > 0 && (
+                                    <div className="px-4 pt-3 border-t border-gray-50">
+                                        <Link
+                                            to="/wishlist"
+                                            className="block w-full text-center bg-gold text-white py-2 rounded-lg text-xs font-bold hover:bg-gold-hover transition-colors"
+                                        >
+                                            View Full Wishlist
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
 
                         {/* Cart */}
                         <Link to="/cart" className="relative text-dark hover:text-gold transition-colors">
@@ -191,17 +272,22 @@ const Header = () => {
 
                 {/* Mobile Menu */}
                 {mobileMenuOpen && (
-                    <div className="md:hidden py-4 border-t border-gray-100 dark:border-gray-700 bg-cream dark:bg-[#1A1A1A] absolute left-0 right-0 shadow-lg">
+                    <div className="md:hidden py-4 border-t border-gray-100 dark:border-gray-700 bg-cream dark:bg-white absolute left-0 right-0 shadow-lg">
                         <nav className="flex flex-col space-y-4 px-6">
-                            <Link to="/" className="nav-link">Home</Link>
-                            <Link to="/products?category=Jewelry" className="nav-link">Jewelry</Link>
-                            <Link to="/products?category=Sarees" className="nav-link">Sarees</Link>
-                            <Link to="/products?category=Stationery" className="nav-link">Stationery</Link>
-                            <Link to="/contact" className="nav-link">Contact</Link>
+                            <Link to="/" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Home</Link>
+                            <Link to="/products?category=Jewelry" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Jewelry</Link>
+                            <Link to="/products?category=Sarees" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Sarees</Link>
+                            <Link to="/products?category=Stationery" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Stationery</Link>
+                            <Link to="/contact" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
                             {user ? (
-                                <button onClick={handleLogout} className="nav-link text-left text-red-500">Logout</button>
+                                <>
+                                    {user.isAdmin && (
+                                        <Link to="/admin" className="nav-link text-gold font-semibold" onClick={() => setMobileMenuOpen(false)}>Admin Dashboard</Link>
+                                    )}
+                                    <button onClick={handleLogout} className="nav-link text-left text-red-500">Logout</button>
+                                </>
                             ) : (
-                                <Link to="/login" className="nav-link">Login</Link>
+                                <Link to="/login" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Login</Link>
                             )}
                         </nav>
                     </div>
@@ -223,7 +309,7 @@ const Header = () => {
                                             className="flex-1 text-lg px-4 py-3 border border-gray-300 rounded-lg focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/30"
                                             autoFocus
                                         />
-                                        
+
                                         {/* Voice Search Button */}
                                         {voiceSupported && (
                                             <div className="relative">
@@ -235,11 +321,10 @@ const Header = () => {
                                                             startVoiceSearch();
                                                         }
                                                     }}
-                                                    className={`p-3 rounded-lg transition-all ${
-                                                        isListening
-                                                            ? 'bg-red-500 text-white animate-pulse'
-                                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                                    }`}
+                                                    className={`p-3 rounded-lg transition-all ${isListening
+                                                        ? 'bg-red-500 text-white animate-pulse'
+                                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                        }`}
                                                     title={isListening ? 'Listening... Click to stop' : 'Click to speak'}
                                                 >
                                                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -275,6 +360,11 @@ const Header = () => {
                                     {searchQuery.trim() === '' ? (
                                         <div className="text-center py-12 text-gray-500">
                                             <p className="text-lg">Start typing to search for products...</p>
+                                        </div>
+                                    ) : loading ? (
+                                        <div className="text-center py-12 flex flex-col items-center">
+                                            <div className="w-10 h-10 border-4 border-gold border-t-transparent rounded-full animate-spin mb-4"></div>
+                                            <p className="text-gray-500 font-medium">Searching products...</p>
                                         </div>
                                     ) : searchResults.length === 0 ? (
                                         <div className="text-center py-12 text-red-500">

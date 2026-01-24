@@ -9,7 +9,9 @@ export const fetchCart = createAsyncThunk(
             const response = await api.get('/cart');
             return response.data.data;
         } catch (error) {
-            return rejectWithValue(error.response?.data?.message || 'Failed to fetch cart');
+            console.error('Cart fetch error:', error.response?.status, error.response?.data);
+            // Don't reject - return empty cart on error instead of crashing
+            return [];
         }
     }
 );

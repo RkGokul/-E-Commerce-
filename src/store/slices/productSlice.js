@@ -12,7 +12,6 @@ export const fetchProducts = createAsyncThunk(
             if (filters.minPrice) params.append('minPrice', filters.minPrice);
             if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
             if (filters.sort) params.append('sort', filters.sort);
-            if (filters.featured) params.append('featured', 'true');
 
             const response = await api.get(`/products?${params.toString()}`);
             return response.data.data;
