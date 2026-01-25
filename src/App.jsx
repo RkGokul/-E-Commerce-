@@ -11,6 +11,7 @@ import Checkout from './pages/Checkout';
 import Login from './pages/Login';
 import Register from './pages/Register.jsx';
 import Contact from './pages/Contact';
+import Wishlist from './pages/Wishlist';
 import Admin from './pages/Admin';
 import AdminLogin from './pages/AdminLogin';
 import PrivateRoute from './utils/PrivateRoute';
@@ -60,6 +61,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
           <Route path="/products/:id" element={<ProductDetail />} />
+          <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/cart" element={<Cart />} />
           <Route
             path="/checkout"

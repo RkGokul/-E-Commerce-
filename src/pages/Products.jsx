@@ -7,7 +7,7 @@ import ProductCard from '../components/ProductCard';
 const Products = () => {
     const dispatch = useDispatch();
     const [searchParams, setSearchParams] = useSearchParams();
-    const { products, loading, filters } = useSelector((state) => state.products);
+    const { products, loading, filters, currentPage, totalPages, totalCount } = useSelector((state) => state.products);
 
     const [isFiltersOpen, setIsFiltersOpen] = useState(false);
     const [localFilters, setLocalFilters] = useState({
@@ -34,8 +34,15 @@ const Products = () => {
     }, [searchParams, dispatch]);
 
     useEffect(() => {
-        dispatch(fetchProducts(filters));
-    }, [dispatch, filters]);
+        // Only fetch if filters have changed or on mount
+        dispatch(fetchProducts({ ...filters, page: 1, limit: 12 }));
+    }, [dispatch, filters.category, filters.search, filters.minPrice, filters.maxPrice, filters.sort]);
+
+    const handleLoadMore = () => {
+        if (currentPage < totalPages) {
+            dispatch(fetchProducts({ ...filters, page: currentPage + 1, limit: 12 }));
+        }
+    };
 
     // Automatic Search logic (Debounce)
     useEffect(() => {
@@ -54,7 +61,7 @@ const Products = () => {
 
     const applyFilters = (filtersToApply = localFilters) => {
         dispatch(setFilters(filtersToApply));
-        dispatch(fetchProducts(filtersToApply));
+        // fetchProducts is called by the useEffect above when filters change
     };
 
     const handleSearchKeyDown = (e) => {
@@ -72,8 +79,7 @@ const Products = () => {
             sort: 'newest',
         };
         setLocalFilters(resetFilters);
-        dispatch(setFilters(resetFilters));
-        dispatch(fetchProducts(resetFilters));
+        dispatch(clearFilters());
         setSearchParams({});
     };
 
@@ -124,8 +130,9 @@ const Products = () => {
                                 <select
                                     value={localFilters.sort}
                                     onChange={(e) => {
-                                        handleFilterChange('sort', e.target.value);
-                                        applyFilters({ ...localFilters, sort: e.target.value });
+                                        const newSort = e.target.value;
+                                        handleFilterChange('sort', newSort);
+                                        applyFilters({ ...localFilters, sort: newSort });
                                     }}
                                     className="w-full px-4 py-3.5 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520] focus:ring-opacity-20 transition-all font-sans text-sm appearance-none cursor-pointer hover:border-gray-300"
                                     style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23DAA520' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: `right 0.75rem center`, backgroundRepeat: `no-repeat`, backgroundSize: `1.5em 1.5em`, paddingRight: '2.5rem' }}
@@ -224,10 +231,7 @@ const Products = () => {
                                             value={localFilters.minPrice}
                                             onChange={(e) => {
                                                 handleFilterChange('minPrice', e.target.value);
-                                                setTimeout(() => {
-                                                    dispatch(setFilters({ minPrice: e.target.value }));
-                                                    dispatch(fetchProducts({ ...localFilters, minPrice: e.target.value }));
-                                                }, 0);
+                                                applyFilters({ ...localFilters, minPrice: e.target.value });
                                             }}
                                             placeholder="₹0"
                                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520] focus:ring-opacity-20 transition-colors"
@@ -240,10 +244,7 @@ const Products = () => {
                                             value={localFilters.maxPrice}
                                             onChange={(e) => {
                                                 handleFilterChange('maxPrice', e.target.value);
-                                                setTimeout(() => {
-                                                    dispatch(setFilters({ maxPrice: e.target.value }));
-                                                    dispatch(fetchProducts({ ...localFilters, maxPrice: e.target.value }));
-                                                }, 0);
+                                                applyFilters({ ...localFilters, maxPrice: e.target.value });
                                             }}
                                             placeholder="₹100,000"
                                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520] focus:ring-opacity-20 transition-colors"
@@ -286,7 +287,7 @@ const Products = () => {
 
                 {/* Product Grid - No changes to grid logic, just removed sidebar wrapper */}
                 <div className="mt-12">
-                    {loading ? (
+                    {loading && products.length === 0 ? (
                         <div className="flex flex-col justify-center items-center h-96">
                             <div className="spinner mb-4"></div>
                             <p className="text-gray-500 font-serif">Loading collection...</p>
@@ -300,11 +301,32 @@ const Products = () => {
                             </button>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                            {products.map((product) => (
-                                <ProductCard key={product._id} product={product} />
-                            ))}
-                        </div>
+                        <>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                                {products && products.map((product) => (
+                                    product && <ProductCard key={product._id || Math.random()} product={product} />
+                                ))}
+                            </div>
+
+                            {/* Load More Button */}
+                            {currentPage < totalPages && (
+                                <div className="mt-16 text-center">
+                                    <button
+                                        onClick={handleLoadMore}
+                                        disabled={loading}
+                                        className="group relative px-10 py-4 bg-dark text-white text-sm font-bold uppercase tracking-widest overflow-hidden transition-all duration-300 hover:bg-gold disabled:bg-gray-400"
+                                    >
+                                        <span className="relative z-10">
+                                            {loading ? 'Discovering...' : 'Load More Products'}
+                                        </span>
+                                        <div className="absolute inset-x-0 bottom-0 h-0.5 bg-white scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+                                    </button>
+                                    <p className="mt-4 text-xs text-gray-500 font-medium tracking-wide">
+                                        Showing {products.length} of {totalCount} treasures
+                                    </p>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

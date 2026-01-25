@@ -1,20 +1,28 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../utils/api';
 
-// Fetch all products with filters (default: newest first)
+// Fetch all products with filters and pagination
 export const fetchProducts = createAsyncThunk(
     'products/fetchProducts',
-    async (filters = {}, { rejectWithValue }) => {
+    async (params = {}, { rejectWithValue }) => {
         try {
-            const params = new URLSearchParams();
-            if (filters.category) params.append('category', filters.category);
-            if (filters.search) params.append('search', filters.search);
-            if (filters.minPrice) params.append('minPrice', filters.minPrice);
-            if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
-            if (filters.sort) params.append('sort', filters.sort);
+            const queryParams = new URLSearchParams();
+            if (params.category) queryParams.append('category', params.category);
+            if (params.search) queryParams.append('search', params.search);
+            if (params.minPrice) queryParams.append('minPrice', params.minPrice);
+            if (params.maxPrice) queryParams.append('maxPrice', params.maxPrice);
+            if (params.sort) queryParams.append('sort', params.sort);
+            if (params.page) queryParams.append('page', params.page);
+            if (params.limit) queryParams.append('limit', params.limit);
 
-            const response = await api.get(`/products?${params.toString()}`);
-            return response.data.data;
+            const response = await api.get(`/products?${queryParams.toString()}`);
+            return {
+                data: response.data.data,
+                totalCount: response.data.totalCount,
+                totalPages: response.data.totalPages,
+                currentPage: response.data.currentPage,
+                isAppend: params.page > 1
+            };
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch products');
         }
@@ -52,12 +60,15 @@ const initialState = {
     currentProduct: null,
     loading: false,
     error: null,
+    totalCount: 0,
+    totalPages: 1,
+    currentPage: 1,
     filters: {
         category: '',
         search: '',
         minPrice: '',
         maxPrice: '',
-        sort: '',
+        sort: 'newest',
     },
 };
 
@@ -67,6 +78,7 @@ const productSlice = createSlice({
     reducers: {
         setFilters: (state, action) => {
             state.filters = { ...state.filters, ...action.payload };
+            state.currentPage = 1; // Reset to page 1 when filters change
         },
         clearFilters: (state) => {
             state.filters = {
@@ -74,8 +86,9 @@ const productSlice = createSlice({
                 search: '',
                 minPrice: '',
                 maxPrice: '',
-                sort: '',
+                sort: 'newest',
             };
+            state.currentPage = 1;
         },
         clearCurrentProduct: (state) => {
             state.currentProduct = null;
@@ -90,7 +103,14 @@ const productSlice = createSlice({
             })
             .addCase(fetchProducts.fulfilled, (state, action) => {
                 state.loading = false;
-                state.products = action.payload;
+                if (action.payload.isAppend) {
+                    state.products = [...state.products, ...action.payload.data];
+                } else {
+                    state.products = action.payload.data;
+                }
+                state.totalCount = action.payload.totalCount;
+                state.totalPages = action.payload.totalPages;
+                state.currentPage = action.payload.currentPage;
             })
             .addCase(fetchProducts.rejected, (state, action) => {
                 state.loading = false;

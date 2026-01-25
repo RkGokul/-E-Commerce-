@@ -2,13 +2,11 @@ import axios from 'axios';
 
 const api = axios.create({
     // baseURL: "http://localhost:5001/api",
-     baseURL: "https://e-commerce-back-end-k15k.onrender.com/api",
+    baseURL: "https://e-commerce-back-end-k15k.onrender.com/api",
     headers: {
         'Content-Type': 'application/json',
     },
 });
-    // baseURL: "https://e-commerce-back-end-k15k.onrender.com/api",
-
 
 // Add token to requests if available
 api.interceptors.request.use(
@@ -28,8 +26,8 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
-            // Token expired or invalid
+        if (error.response?.status === 401 && !error.config.url.includes('login') && !error.config.url.includes('register')) {
+            // Token expired or invalid - only redirect if NOT logging in
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/login';

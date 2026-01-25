@@ -163,7 +163,7 @@ const Header = () => {
 
                         {/* Wishlist */}
                         <div className="relative group/wishlist">
-                            <Link to="" className="relative text-dark hover:text-gold transition-colors block p-2">
+                            <Link to="/wishlist" className="relative text-dark hover:text-gold transition-colors block p-2">
                                 <Heart className="w-5 h-5" strokeWidth={1.5} />
                                 {wishlistItems.length > 0 && (
                                     <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
@@ -279,6 +279,8 @@ const Header = () => {
                             <Link to="/products?category=Sarees" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Sarees</Link>
                             <Link to="/products?category=Stationery" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Stationery</Link>
                             <Link to="/contact" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
+                            <Link to="/wishlist" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Wishlist</Link>
+                            <Link to="/cart" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Cart</Link>
                             {user ? (
                                 <>
                                     {user.isAdmin && (

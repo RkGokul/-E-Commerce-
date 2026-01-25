@@ -7,8 +7,10 @@ const ProductCard = ({ product }) => {
             <div className="product-image-container mb-4 relative">
                 <Link to={`/products/${product._id}`}>
                     <img
-                        src={product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/400'}
-                        alt={product.name}
+                        src={product.images && product.images.length > 0
+                            ? (typeof product.images[0] === 'string' ? product.images[0].replace('w=500', 'w=400') : product.images[0])
+                            : 'https://via.placeholder.com/400'}
+                        alt={product.name || 'Product'}
                         loading="lazy"
                     />
                 </Link>
