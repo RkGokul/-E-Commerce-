@@ -18,7 +18,8 @@ const Register = () => {
         name: '',
         email: '',
         password: '',
-        confirmPassword: ''
+        confirmPassword: '',
+        phone: ''
     });
 
     const [showPassword, setShowPassword] = useState(false);
@@ -29,7 +30,14 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        dispatch(clearError());
+      dispatch(register({
+    name: formData.name,
+    email: formData.email,
+    phone: formData.phone,
+    password: formData.password,
+    confirmPassword: formData.confirmPassword
+}))
+
 
         if (formData.password !== formData.confirmPassword) {
             // Should handle this better, maybe local state error
@@ -83,7 +91,7 @@ const Register = () => {
                                     name="name"
                                     type="text"
                                     required
-                                    autoComplete="off"
+                                    // autoComplete="off"
                                     value={formData.name}
                                     onChange={handleChange}
                                     className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] sm:text-sm"
@@ -108,7 +116,7 @@ const Register = () => {
                                     name="email"
                                     type="email"
                                     required
-                                    autoComplete="off"
+                                    // autoComplete="off"
                                     value={formData.email}
                                     onChange={handleChange}
                                     className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] sm:text-sm"
@@ -116,6 +124,35 @@ const Register = () => {
                                 />
                             </div>
                         </div>
+                        
+                         {/* Phone Number Field */}
+                         <div className="space-y-2">
+                            <label htmlFor="phone number" className="block text-sm font-medium text-gray-700">
+                                Phone Number 
+                            </label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 5h2l2 5-2 2a13 13 0 006 6l2-2 5 2v2c0 1-1 2-2 2h-1C8 22 2 16 2 9V8c0-1 1-2 2-2z"/>
+                                    </svg>
+                                </div>
+                               <input
+                                    id="phone"
+                                    name="phone"
+                                    type="tel"
+                                    required
+                                    // autoComplete="off"
+                                    maxLength={10}
+                                    pattern="[0-9]{10}"
+                                    value={formData.phone}
+                                    onChange={handleChange}
+                                    className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] sm:text-sm"
+                                    placeholder="Enter your phone number"
+                                    />
+
+                            </div>
+                        </div>
+                        
 
                         {/* Password Field */}
                         <div className="space-y-2">
@@ -135,6 +172,8 @@ const Register = () => {
                                     required
                                     autoComplete="new-password"
                                     value={formData.password}
+                                    maxLength={6}
+                                    pattern="[0-6]{6}"
                                     onChange={handleChange}
                                     className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] sm:text-sm"
                                     placeholder="Enter your password"
@@ -151,6 +190,7 @@ const Register = () => {
                                 </button>
                             </div>
                         </div>
+                        
 
                         {/* Confirm Password Field */}
                         <div className="space-y-2">
@@ -169,6 +209,8 @@ const Register = () => {
                                     type="password"
                                     required
                                     autoComplete="new-password"
+                                    maxLength={6}
+                                    pattern="[0-6]{6}"
                                     value={formData.confirmPassword}
                                     onChange={handleChange}
                                     className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] sm:text-sm"
