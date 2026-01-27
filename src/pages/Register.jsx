@@ -162,6 +162,7 @@ const Register = () => {
                                     name="password"
                                     type={showPassword ? "text" : "password"}
                                     required
+                                     maxLength={10}
                                     autoComplete="new-password"
                                     value={formData.password}
                                     onChange={handleChange}
@@ -198,6 +199,7 @@ const Register = () => {
                                     name="confirmPassword"
                                     type="password"
                                     required
+                                     maxLength={10}
                                     autoComplete="new-password"
                                     value={formData.confirmPassword}
                                     onChange={handleChange}

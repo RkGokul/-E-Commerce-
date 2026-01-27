@@ -102,6 +102,7 @@ const Login = () => {
                                     name="password"
                                     type={showPassword ? "text" : "password"}
                                     required
+                                     maxLength={10}
                                     autoComplete="new-password"
                                     value={formData.password}
                                     onChange={handleChange}

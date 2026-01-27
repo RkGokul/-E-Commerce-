@@ -4,9 +4,15 @@ import api from '../utils/api';
 
 const Admin = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('Jewellery');
-  const [products, setProducts] = useState({ Jewellery: [], Sarees: [], Stationery: [] });
+  const [activeSection, setActiveSection] = useState('products');
+  const [activeCategory, setActiveCategory] = useState('Jewellery');
   const [loading, setLoading] = useState(false);
+  const [products, setProducts] = useState({ Jewellery: [], Sarees: [], Stationery: [] });
+  const [users, setUsers] = useState([]);
+  const [carts, setCarts] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [contacts, setContacts] = useState([]);
+
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -22,37 +28,79 @@ const Admin = () => {
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  // Check if user is logged in and is admin - redirect if not
+  // Authentication Guard
   useEffect(() => {
     if (!token || !user.isAdmin) {
       navigate('/admin');
     }
   }, [token, user.isAdmin, navigate]);
 
-  // Fetch products by category
+  // Initial Data Fetch based on active section
   useEffect(() => {
     if (token && user.isAdmin) {
-      fetchProducts();
+      fetchSectionData();
     }
-  }, [token, user.isAdmin]);
+  }, [activeSection, activeCategory, token, user.isAdmin]);
 
-  const fetchProducts = async () => {
+  const fetchSectionData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const categories = ['Jewellery', 'Sarees', 'Stationery'];
-      const allProducts = {};
-
-      for (const cat of categories) {
-        const response = await api.get(`/products?category=${cat}`);
-        allProducts[cat] = response.data.data || [];
+      switch (activeSection) {
+        case 'products':
+          await fetchProducts();
+          break;
+        case 'users':
+          await fetchUsers();
+          break;
+        case 'carts':
+          await fetchCarts();
+          break;
+        case 'orders':
+          await fetchOrders();
+          break;
+        case 'contacts':
+          await fetchContacts();
+          break;
+        default:
+          break;
       }
-
-      setProducts(allProducts);
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error(`Error fetching ${activeSection}:`, error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchProducts = async () => {
+    const response = await api.get(`/products?category=${activeCategory}`);
+    setProducts(prev => ({
+      ...prev,
+      [activeCategory]: response.data.data || []
+    }));
+  };
+
+  const fetchUsers = async () => {
+    const response = await api.get('/auth/users');
+    console.log('Admin fetchUsers Response:', response.data);
+    setUsers(response.data.data || []);
+  };
+
+  const fetchCarts = async () => {
+    const response = await api.get('/auth/all');
+    console.log('Admin fetchCarts Response:', response.data);
+    setCarts(response.data.data || []);
+  };
+
+  const fetchOrders = async () => {
+    const response = await api.get('/orders/all');
+    console.log('Admin fetchOrders Response:', response.data);
+    setOrders(response.data.data || []);
+  };
+
+  const fetchContacts = async () => {
+    const response = await api.get('/contact');
+    console.log('Admin fetchContacts Response:', response.data);
+    setContacts(response.data.data || []);
   };
 
   const handleInputChange = (e) => {
@@ -79,36 +127,8 @@ const Admin = () => {
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
-
-    if (!token) {
-      alert('Please login as admin');
-      navigate('/login');
-      return;
-    }
-
-    // Validate form
-    if (!formData.name || !formData.price || !formData.stock || !formData.description || !formData.image) {
-      alert('Please fill all fields including image');
-      return;
-    }
-
-    // Validate numbers
-    const stock = parseInt(formData.stock);
-    const price = parseFloat(formData.price);
-
-    if (isNaN(stock) || stock < 0) {
-      alert('Stock must be a valid positive number');
-      return;
-    }
-
-    if (isNaN(price) || price < 0) {
-      alert('Price must be a valid positive number');
-      return;
-    }
-
     try {
       setLoading(true);
-
       const productData = {
         ...formData,
         price: parseFloat(formData.price),
@@ -133,336 +153,319 @@ const Admin = () => {
       console.log('Raw stock value:', formData.stock, 'Type:', typeof formData.stock);
 
       if (editingId) {
-        // Update product
-        await api.put(
-          `/products/${editingId}`,
-          productData
-        );
+        await api.put(`/products/${editingId}`, productData);
         alert('Product updated successfully!');
       } else {
-        // Add new product
-        await api.post(
-          `/products`,
-          productData
-        );
+        await api.post('/products', productData);
         alert('Product added successfully!');
       }
 
-      setFormData({
-        name: '',
-        price: '',
-        description: '',
-        image: '',
-        category: 'Jewellery',
-        stock: '',
-        newArrival: false,
-      });
       setEditingId(null);
       setShowForm(false);
-      await fetchProducts();
+      setFormData({ name: '', price: '', description: '', image: '', category: activeCategory, stock: '', newArrival: false });
+      fetchProducts();
     } catch (error) {
-      console.error('Error adding product:', error);
-      console.error('Error response:', error.response?.data);
-      alert(error.response?.data?.message || error.response?.data?.error || 'Error adding product');
+      alert(error.response?.data?.message || 'Error processing product');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEditProduct = (product) => {
-    setFormData({
-      name: product.name,
-      price: product.price,
-      description: product.description,
-      image: product.image,
-      category: product.category,
-      stock: product.stock,
-      newArrival: product.newArrival || false,
-    });
-    setEditingId(product._id);
-    setShowForm(true);
-    setActiveTab(product.category);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleDeleteProduct = async (productId) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return;
-
-    try {
-      setLoading(true);
-      await api.delete(`/products/${productId}`);
-      alert('Product deleted successfully!');
-      await fetchProducts();
-    } catch (error) {
-      console.error('Error deleting product:', error);
-      alert('Error deleting product');
-    } finally {
-      setLoading(false);
+  const handleDeleteProduct = async (id) => {
+    if (window.confirm('Delete this product?')) {
+      try {
+        await api.delete(`/products/${id}`);
+        fetchProducts();
+      } catch (error) {
+        alert('Error deleting product');
+      }
     }
   };
 
-
-  const handleCancel = () => {
-    setShowForm(false);
-    setEditingId(null);
-    setFormData({
-      name: '',
-      price: '',
-      description: '',
-      image: '',
-      category: 'Jewellery',
-      stock: '',
-      newArrival: false,
-    });
-  };
-
-  const categoryIcons = {
-    Jewellery: '💎',
-    Sarees: '👗',
-    Stationery: '📝',
-  };
+  const sidebarItems = [
+    { id: 'products', label: 'Products', icon: '' },
+    { id: 'users', label: 'Users', icon: '' },
+    { id: 'carts', label: 'Carts', icon: '' },
+    { id: 'orders', label: 'Orders', icon: '' },
+    { id: 'contacts', label: 'Contacts', icon: '' },
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
-      <div className="max-w-6xl mx-auto w-full">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-serif font-bold text-slate-800 mb-2">Admin Dashboard</h1>
-            <p className="text-slate-600">Manage products across all categories</p>
-          </div>
+    <div className="flex min-h-screen bg-slate-50">
+      {/* Sidebar */}
+      <aside className="w-64 bg-red-100 text-black  fixed h-full shadow-2xl transition-all duration-300">
+        <div className="p-6">
+          <h1 className="text-2xl font-serif font-bold tracking-tight text-yellow-500">Admin Pro</h1>
+          <p className="text-gray-600 text-xs mt-1 uppercase tracking-widest font-semibold">Management Console</p>
         </div>
-
-        {/* Category Tabs & Add Button */}
-        <div className="flex gap-4 mb-8 flex-wrap items-center">
-          {['Jewellery', 'Sarees', 'Stationery'].map((cat) => (
+        <nav className="mt-8">
+          {sidebarItems.map((item) => (
             <button
-              key={cat}
-              onClick={() => setActiveTab(cat)}
-              className={`px-6 py-3 rounded-lg font-semibold transition-all ${activeTab === cat
-                ? 'bg-yellow-600 text-white shadow-lg'
-                : 'bg-white text-slate-700 border-2 border-yellow-200 hover:border-yellow-400'
+              key={item.id}
+              onClick={() => {
+                setActiveSection(item.id);
+                setShowForm(false);
+              }}
+              className={`w-full flex items-center px-6 py-4 text-sm font-medium transition-all group ${activeSection === item.id
+                ? 'bg-yellow-600 text-white border-r-4 border-yellow-300'
+                : 'text-black hover:bg-slate-800 hover:text-white'
                 }`}
             >
-              {categoryIcons[cat]} {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              <span className="text-xl mr-3 group-hover:scale-110 transition-transform">{item.icon}</span>
+              {item.label}
             </button>
           ))}
+        </nav>
+      </aside>
 
-          {/* Add Product Button */}
-          {!showForm && (
-            <button
-              onClick={() => setShowForm(true)}
-              className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-semibold rounded-lg shadow-lg transition-all"
-            >
-              + Add New Product
-            </button>
-          )}
-        </div>
-
-        {/* Add/Edit Product Form */}
-        {showForm && (
-          <div className="bg-white rounded-xl shadow-xl p-8 mb-8 border-l-4 border-yellow-500">
-            <h2 className="text-2xl font-serif font-bold text-slate-800 mb-6">
-              {editingId ? 'Edit Product' : 'Add New Product'}
-            </h2>
-
-            <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Name */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Product Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  placeholder="Enter product name"
-                />
-              </div>
-
-              {/* Price */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Price (₹) *</label>
-                <input
-                  type="number"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  required
-                  step="0.01"
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  placeholder="0.00"
-                />
-              </div>
-
-              {/* Stock */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Stock *</label>
-                <input
-                  type="number"
-                  name="stock"
-                  value={formData.stock}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  placeholder="0"
-                />
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Category *</label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                >
-                  <option value="Jewellery">Jewellery</option>
-                  <option value="Sarees">Sarees</option>
-                  <option value="Stationery">Stationery</option>
-                </select>
-              </div>
-
-              {/* Image Upload */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Product Image *</label>
-                <div className="flex flex-col gap-3">
-                  <div className="relative">
-                    <input
-                      type="file"
-                      id="product-image"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      required={!formData.image}
-                      className="hidden"
-                    />
-                    <label
-                      htmlFor="product-image"
-                      className="cursor-pointer inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-slate-300 rounded-lg text-slate-700 font-semibold hover:border-yellow-500 hover:text-yellow-600 transition-all shadow-sm"
-                    >
-                      <span className="text-xl"></span>
-                      Choose File
-                    </label>
-                  </div>
-
-                  {formData.image && (
-                    <div className="mt-2 text-sm text-green-600 font-medium flex items-center gap-2">
-                      <span>✓ Image Selected</span>
-                    </div>
-                  )}
-
-                  {formData.image && (
-                    <div className="mt-2">
-                      <p className="text-sm text-slate-600 mb-2">Preview:</p>
-                      <img src={formData.image} alt="Preview" className="h-32 w-32 object-cover rounded-lg border-2 border-slate-200" />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Description */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Description *</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  required
-                  rows="4"
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  placeholder="Enter product description"
-                />
-              </div>
-
-              {/* New Arrival Checkbox */}
-              <div className="md:col-span-2 flex items-center">
-                <input
-                  type="checkbox"
-                  name="newArrival"
-                  checked={formData.newArrival}
-                  onChange={handleInputChange}
-                  className="w-4 h-4 accent-green-500"
-                />
-                <label className="ml-2 text-sm font-semibold text-slate-700">Mark as New Arrival</label>
-              </div>
-
-              {/* Buttons */}
-              <div className="md:col-span-2 flex gap-4">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-semibold rounded-lg transition-all disabled:opacity-50"
-                >
-                  {loading ? 'Processing...' : editingId ? 'Update Product' : 'Add Product'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="flex-1 px-6 py-3 bg-slate-300 hover:bg-slate-400 text-slate-800 font-semibold rounded-lg transition-all"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* Products List */}
-        <div className="bg-white rounded-xl shadow-xl p-8">
-          <h2 className="text-2xl font-serif font-bold text-slate-800 mb-6">
-            {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Products ({products[activeTab]?.length || 0})
+      {/* Main Content */}
+      <main className="flex-1 ml-64 p-8">
+        <header className="flex justify-between items-center mb-10">
+          <h2 className="text-3xl font-serif font-bold text-slate-800 capitalize">
+            {activeSection} Management
           </h2>
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-slate-500 bg-slate-200 px-3 py-1 rounded-full uppercase tracking-tighter">
+              Admin: {user.name}
+            </span>
+            <button
+              onClick={() => { localStorage.clear(); navigate('/admin'); }}
+              className="text-sm text-red-600 font-semibold hover:text-red-700 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </header>
 
-          {loading && <p className="text-center text-slate-600">Loading...</p>}
-
-          {!loading && products[activeTab]?.length === 0 ? (
-            <p className="text-center text-slate-500 py-8">No products in this category yet</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products[activeTab]?.map((product) => (
-                <div
-                  key={product._id}
-                  className="border border-slate-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+        {/* Section Content */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          {/* Products View */}
+          {activeSection === 'products' && (
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-8">
+                <div className="flex bg-slate-100 p-1 rounded-xl">
+                  {['Jewellery', 'Sarees', 'Stationery'].map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveCategory(cat)}
+                      className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeCategory === cat ? 'bg-white text-yellow-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setShowForm(!showForm)}
+                  className="bg-slate-900 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-slate-800 transition-all flex items-center gap-2"
                 >
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-48 object-cover"
-                    onError={(e) => (e.target.src = 'https://via.placeholder.com/300x200?text=Product')}
-                  />
-                  <div className="p-4">
-                    <h3 className="font-semibold text-slate-800 mb-2 truncate">{product.name}</h3>
-                    <p className="text-slate-600 text-sm mb-3 line-clamp-2">{product.description}</p>
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="text-lg font-bold text-yellow-600">₹{product.price}</span>
-                      <span className="text-sm bg-slate-100 px-2 py-1 rounded">Stock: {product.stock}</span>
+                  {showForm ? 'Cancel' : '+ New Product'}
+                </button>
+              </div>
+
+              {showForm && (
+                <form onSubmit={handleAddProduct} className="mb-10 p-6 bg-slate-50 rounded-2xl border border-slate-200 grid grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Name</label>
+                    <input type="text" name="name" value={formData.name} onChange={handleInputChange} required className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-yellow-400 outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Price</label>
+                    <input type="number" name="price" value={formData.price} onChange={handleInputChange} required className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-yellow-400 outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Stock</label>
+                    <input type="number" name="stock" value={formData.stock} onChange={handleInputChange} required className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-yellow-400 outline-none" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Product Image</label>
+                    <div className="flex items-center gap-6">
+                      <div className="flex-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="hidden"
+                          id="admin-image-upload"
+                        />
+                        <label
+                          htmlFor="admin-image-upload"
+                          className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-slate-300 rounded-xl hover:border-yellow-500 hover:bg-yellow-50 transition-all cursor-pointer group"
+                        >
+                          <span className="text-slate-500 group-hover:text-yellow-600 font-medium">
+                            {formData.image ? 'Change Image' : 'Click to upload image'}
+                          </span>
+                        </label>
+                      </div>
+                      {formData.image && (
+                        <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200">
+                          <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                      )}
                     </div>
-                    {product.isNewArrival && (
-                      <p className="text-xs font-semibold text-green-600 mb-3">🆕 New Arrival</p>
-                    )}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEditProduct(product)}
-                        className="flex-1 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded font-semibold transition-all text-sm"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProduct(product._id)}
-                        className="flex-1 px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded font-semibold transition-all text-sm"
-                      >
-                        Delete
-                      </button>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Description</label>
+                    <textarea name="description" value={formData.description} onChange={handleInputChange} required rows="3" className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-yellow-400 outline-none" />
+                  </div>
+                  <div className="col-span-2 flex items-center gap-3">
+                    <input type="checkbox" name="newArrival" checked={formData.newArrival} onChange={handleInputChange} className="w-4 h-4 accent-yellow-600" />
+                    <label className="text-sm font-semibold text-slate-700">Mark as New Arrival</label>
+                  </div>
+                  <button type="submit" className="col-span-2 bg-yellow-600 text-white py-4 rounded-xl font-bold hover:bg-yellow-700 transition-all shadow-lg shadow-yellow-600/20">
+                    {editingId ? 'Update Product' : 'Create Product'}
+                  </button>
+                </form>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {products[activeCategory]?.map(product => (
+                  <div key={product._id} className="group bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:shadow-slate-200 transition-all">
+                    <img src={product.image} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" alt={product.name} />
+                    <div className="p-5">
+                      <h4 className="font-bold text-slate-800 text-lg mb-1">{product.name}</h4>
+                      <p className="text-yellow-600 font-bold mb-4">₹{product.price}</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { setEditingId(product._id); setFormData(product); setShowForm(true); }}
+                          className="flex-1 py-2 text-sm font-bold bg-white border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProduct(product._id)}
+                          className="flex-1 py-2 text-sm font-bold text-red-600 bg-white border border-red-100 rounded-lg hover:bg-red-50 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Users View */}
+          {activeSection === 'users' && (
+            <div className="p-6 overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Name</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Email</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Phone</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Role</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {users.map(u => (
+                    <tr key={u._id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 font-semibold text-slate-800">{u.name}</td>
+                      <td className="px-6 py-4 text-slate-600">{u.email}</td>
+                      <td className="px-6 py-4 text-slate-600">{u.phone || 'N/A'}</td>
+                      <td className="px-6 py-4 text-slate-600">
+                        <span className={`px-2 py-1 rounded text-xs font-bold ${u.isAdmin ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}`}>
+                          {u.isAdmin ? 'ADMIN' : 'USER'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Carts View as folders */}
+          {activeSection === 'carts' && (
+            <div className="p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {carts.map(cart => (
+                  <div key={cart._id} className="bg-emerald-50 border border-emerald-100 p-6 rounded-2xl hover:shadow-md transition-all group">
+                    <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">📁</div>
+                    <h4 className="font-bold text-emerald-900 truncate">{cart.user?.name || 'Guest'}</h4>
+                    <p className="text-xs text-emerald-700 font-semibold mb-3">{cart.items.length} Items in cart</p>
+                    <div className="text-xs text-emerald-600">
+                      {cart.items.slice(0, 2).map((item, i) => (
+                        <p key={i} className="truncate">• {item.product?.name || 'Product'}</p>
+                      ))}
+                      {cart.items.length > 2 && <p>+ {cart.items.length - 2} more</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Orders View */}
+          {activeSection === 'orders' && (
+            <div className="p-6 overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Order ID</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Customer</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Total</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Status</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {orders.map(o => (
+                    <tr key={o._id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 font-mono text-xs text-slate-500">#{o._id.slice(-6).toUpperCase()}</td>
+                      <td className="px-6 py-4 font-semibold text-slate-800">{o.user?.name}</td>
+                      <td className="px-6 py-4 font-bold text-yellow-700">₹{o.totalAmount}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${o.status === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                          }`}>
+                          {o.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-500">{new Date(o.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Contacts View */}
+          {activeSection === 'contacts' && (
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              {contacts.map(c => (
+                <div key={c._id} className="p-6 border border-slate-200 rounded-2xl relative group bg-white hover:border-yellow-400 transition-all">
+                  <div className="absolute top-6 right-6 px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-[10px] font-black uppercase">NEW</div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold">
+                      {c.name ? c.name[0].toUpperCase() : '?'}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-800 leading-none">{c.name || 'Anonymous'}</h4>
+                      <span className="text-xs text-slate-500">{c.email}</span>
+                    </div>
+                  </div>
+                  <h5 className="font-bold text-sm text-slate-700 mb-2">{c.subject}</h5>
+                  <p className="text-sm text-slate-600 italic">"{c.message}"</p>
+                  <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
+                    <span className="text-[10px] text-slate-400 font-bold">{new Date(c.createdAt).toLocaleString()}</span>
+                    <button className="text-xs font-bold text-yellow-600 hover:text-yellow-700 uppercase tracking-widest">Reply →</button>
                   </div>
                 </div>
               ))}
             </div>
           )}
+
+          {loading && (
+            <div className="p-20 text-center">
+              <div className="animate-spin text-4xl mb-4">🌀</div>
+              <p className="font-serif italic text-slate-500">Retrieving secure data...</p>
+            </div>
+          )}
         </div>
-      </div>
+      </main>
     </div>
   );
-}
+};
+
 export default Admin;
