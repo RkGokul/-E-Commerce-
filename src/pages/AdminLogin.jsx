@@ -133,13 +133,13 @@ const AdminLogin = () => {
           </form>
 
           {/* Info */}
-          <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+          {/* <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
             <p className="text-sm text-slate-600">
               <span className="font-semibold">Demo Credentials:</span><br />
-              Email: rkadmin@gmail.com<br />
-              Password: Rk@gokul1913
+              Email: admin@gmail.com<br />
+              Password: admin123
             </p>
-          </div>
+          </div> */}
         </div>
 
         {/* Footer */}

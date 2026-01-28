@@ -106,7 +106,7 @@ const Header = () => {
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center gap-10 md:gap-12">
                         <Link to="/" className="nav-link">Home</Link>
-                        <Link to="/products?category=Jewelry" className="nav-link">Jewelry</Link>
+                        <Link to="/products?category=Jewelry" className="nav-link">Jewellery</Link>
                         <Link to="/products?category=Sarees" className="nav-link">Sarees</Link>
                         <Link to="/products?category=Stationery" className="nav-link">Stationery</Link>
                         <Link to="/contact" className="nav-link">Contact</Link>
