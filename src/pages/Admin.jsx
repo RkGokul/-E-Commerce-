@@ -86,7 +86,7 @@ const Admin = () => {
   };
 
   const fetchCarts = async () => {
-    const response = await api.get('/auth/all');
+    const response = await api.get('/cart/all');
     console.log('Admin fetchCarts Response:', response.data);
     setCarts(response.data.data || []);
   };
@@ -183,11 +183,11 @@ const Admin = () => {
   };
 
   const sidebarItems = [
-    { id: 'products', label: 'Products', icon: '' },
-    { id: 'users', label: 'Users', icon: '' },
-    { id: 'carts', label: 'Carts', icon: '' },
-    { id: 'orders', label: 'Orders', icon: '' },
-    { id: 'contacts', label: 'Contacts', icon: '' },
+    { id: 'products', label: 'Products', icon: '📦' },
+    { id: 'users', label: 'Users', icon: '👥' },
+    { id: 'carts', label: 'Carts', icon: '🛒' },
+    { id: 'orders', label: 'Orders', icon: '📜' },
+    { id: 'contacts', label: 'Contacts', icon: '📧' },
   ];
 
   return (

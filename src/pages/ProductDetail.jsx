@@ -158,7 +158,7 @@ const ProductDetail = () => {
                                 {product.originalPrice && (
                                     <>
                                         <span className="text-xl text-gray-400 line-through">
-                                            ₹{product.originalPrice.toLocaleString()}
+                                            ₹{product.alPrice.toLocaleString()}
                                         </span>
                                         <span className="bg-[#411516] text-[#E7C5C6] text-[10px] font-bold px-2 py-0.5 rounded uppercase">
                                             {discount}% OFF
