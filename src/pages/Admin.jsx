@@ -12,6 +12,7 @@ const Admin = () => {
   const [carts, setCarts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [contacts, setContacts] = useState([]);
+  const [stats, setStats] = useState(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -51,9 +52,6 @@ const Admin = () => {
           break;
         case 'users':
           await fetchUsers();
-          break;
-        case 'carts':
-          await fetchCarts();
           break;
         case 'orders':
           await fetchOrders();
@@ -101,6 +99,12 @@ const Admin = () => {
     const response = await api.get('/contact');
     console.log('Admin fetchContacts Response:', response.data);
     setContacts(response.data.data || []);
+  };
+
+  const fetchStats = async () => {
+    const response = await api.get('/admin/stats');
+    console.log('Admin fetchStats Response:', response.data);
+    setStats(response.data.data || null);
   };
 
   const handleInputChange = (e) => {
@@ -193,6 +197,7 @@ const Admin = () => {
   };
 
   const sidebarItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'products', label: 'Products', icon: '📦' },
     { id: 'users', label: 'Users', icon: '👥' },
     { id: 'orders', label: 'Orders', icon: '📜' },
@@ -248,6 +253,78 @@ const Admin = () => {
 
         {/* Section Content */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative min-h-[400px]">
+          {/* Dashboard View */}
+          {activeSection === 'dashboard' && stats && (
+            <div className="p-8 animate-in fade-in duration-500">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                <div className="bg-slate-900 p-6 rounded-2xl text-white shadow-xl shadow-slate-200">
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Total Revenue</p>
+                  <h3 className="text-3xl font-serif font-bold">₹{stats.totalRevenue?.toLocaleString()}</h3>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Orders</p>
+                  <h3 className="text-3xl font-serif font-bold text-slate-800">{stats.totalOrders}</h3>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Customers</p>
+                  <h3 className="text-3xl font-serif font-bold text-slate-800">{stats.totalUsers}</h3>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Products</p>
+                  <h3 className="text-3xl font-serif font-bold text-slate-800">{stats.totalProducts}</h3>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Recent Orders */}
+                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                  <h4 className="font-bold text-slate-800 mb-4 flex items-center justify-between">
+                    <span>Recent Orders</span>
+                    <button onClick={() => setActiveSection('orders')} className="text-xs text-yellow-600 hover:text-yellow-700 font-bold uppercase tracking-tighter">View All →</button>
+                  </h4>
+                  <div className="space-y-4">
+                    {stats.recentOrders?.map(order => (
+                      <div key={order._id} className="bg-white p-4 rounded-xl border border-slate-100 flex justify-between items-center shadow-sm">
+                        <div>
+                          <p className="font-bold text-sm text-slate-800">{order.user?.name || 'Guest'}</p>
+                          <p className="text-[10px] text-slate-400 font-mono tracking-tighter uppercase">{order._id.slice(-8)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-black text-yellow-600">₹{order.totalAmount}</p>
+                          <p className="text-[10px] text-slate-500 font-bold uppercase">{new Date(order.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {(!stats.recentOrders || stats.recentOrders.length === 0) && (
+                      <p className="text-center text-slate-400 italic py-4 text-sm">No recent orders</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Recent Messages */}
+                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                  <h4 className="font-bold text-slate-800 mb-4 flex items-center justify-between">
+                    <span>Recent Messages</span>
+                    <button onClick={() => setActiveSection('contacts')} className="text-xs text-yellow-600 hover:text-yellow-700 font-bold uppercase tracking-tighter">View All →</button>
+                  </h4>
+                  <div className="space-y-4">
+                    {stats.recentMessages?.map(msg => (
+                      <div key={msg._id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="font-bold text-sm text-slate-800">{msg.name}</p>
+                          <span className="text-[10px] text-slate-400 font-bold">{new Date(msg.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-xs text-slate-500 line-clamp-2 italic">"{msg.message}"</p>
+                      </div>
+                    ))}
+                    {(!stats.recentMessages || stats.recentMessages.length === 0) && (
+                      <p className="text-center text-slate-400 italic py-4 text-sm">No recent messages</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Products View */}
           {activeSection === 'products' && (
             <div className="p-6">

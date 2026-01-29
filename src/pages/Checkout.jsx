@@ -18,11 +18,11 @@ const Checkout = () => {
         pincode: '',
         country: 'India',
         paymentMethod: 'COD',
-        cardName: '',
-        cardNumber: '',
-        expiry: '',
-        cvv: '',
-        upiId: '',
+        // cardName: '',
+        // cardNumber: '',
+        // expiry: '',
+        // cvv: '',
+        // upiId: '',
     });
 
     const [loading, setLoading] = useState(false);
@@ -221,8 +221,8 @@ const Checkout = () => {
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                                     {[
                                         { id: 'COD', label: 'Cash on Delivery', icon: Truck },
-                                        { id: 'Card', label: 'Credit/Debit Card', icon: CreditCard },
-                                        { id: 'UPI', label: 'UPI / GPay', icon: Wallet },
+                                        // { id: 'Card', label: 'Credit/Debit Card', icon: CreditCard },
+                                        // { id: 'UPI', label: 'UPI / GPay', icon: Wallet },
                                     ].map((method) => (
                                         <label
                                             key={method.id}
@@ -248,7 +248,7 @@ const Checkout = () => {
                                 </div>
 
                                 {/* Dynamic Payment Fields */}
-                                {formData.paymentMethod === 'Card' && (
+                                {/* {formData.paymentMethod === 'Card' && (
                                     <div className="space-y-4 p-6 bg-gray-50 rounded-xl animate-in fade-in slide-in-from-top-2">
                                         <div className="space-y-1">
                                             <label className="label-premium text-[10px]">Cardholder Name</label>
@@ -293,9 +293,9 @@ const Checkout = () => {
                                             </div>
                                         </div>
                                     </div>
-                                )}
+                                )} */}
 
-                                {formData.paymentMethod === 'UPI' && (
+                                {/* {formData.paymentMethod === 'UPI' && (
                                     <div className="p-6 bg-gray-50 rounded-xl animate-in fade-in slide-in-from-top-2">
                                         <div className="space-y-1">
                                             <label className="label-premium text-[10px]">UPI ID</label>
@@ -311,7 +311,7 @@ const Checkout = () => {
                                             * You will need to approve the payment in your UPI app.
                                         </p>
                                     </div>
-                                )}
+                                )} */}
                             </section>
 
                             <button
