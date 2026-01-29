@@ -133,7 +133,7 @@ const Admin = () => {
         ...formData,
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock),
-        category: activeTab,
+        category: activeCategory,
       };
 
       // Set newArrivalDate if newArrival is checked
@@ -181,13 +181,22 @@ const Admin = () => {
       }
     }
   };
+  const handleDeleteCart = async (cartId) => {
+    if (window.confirm('Are you sure you want to clear this cart?')) {
+      try {
+        await api.delete(`/cart/admin/${cartId}`);
+        fetchCarts();
+      } catch (error) {
+        alert('Error deleting cart');
+      }
+    }
+  };
 
   const sidebarItems = [
     { id: 'products', label: 'Products', icon: '📦' },
     { id: 'users', label: 'Users', icon: '👥' },
-    { id: 'carts', label: 'Carts', icon: '🛒' },
     { id: 'orders', label: 'Orders', icon: '📜' },
-    { id: 'contacts', label: 'Contacts', icon: '📧' },
+    { id: 'contacts', label: 'User Messages', icon: '📩' },
   ];
 
   return (
@@ -222,7 +231,7 @@ const Admin = () => {
       <main className="flex-1 ml-64 p-8">
         <header className="flex justify-between items-center mb-10">
           <h2 className="text-3xl font-serif font-bold text-slate-800 capitalize">
-            {activeSection} Management
+            {activeSection === 'contacts' ? 'User Messages' : activeSection} Management
           </h2>
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-slate-500 bg-slate-200 px-3 py-1 rounded-full uppercase tracking-tighter">
@@ -238,7 +247,7 @@ const Admin = () => {
         </header>
 
         {/* Section Content */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative min-h-[400px]">
           {/* Products View */}
           {activeSection === 'products' && (
             <div className="p-6">
@@ -377,26 +386,42 @@ const Admin = () => {
           )}
 
           {/* Carts View as folders */}
-          {activeSection === 'carts' && (
-            <div className="p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* {activeSection === 'carts' && (
+            <div className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {carts.map(cart => (
-                  <div key={cart._id} className="bg-emerald-50 border border-emerald-100 p-6 rounded-2xl hover:shadow-md transition-all group">
-                    <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">📁</div>
-                    <h4 className="font-bold text-emerald-900 truncate">{cart.user?.name || 'Guest'}</h4>
-                    <p className="text-xs text-emerald-700 font-semibold mb-3">{cart.items.length} Items in cart</p>
-                    <div className="text-xs text-emerald-600">
-                      {cart.items.slice(0, 2).map((item, i) => (
-                        <p key={i} className="truncate">• {item.product?.name || 'Product'}</p>
-                      ))}
-                      {cart.items.length > 2 && <p>+ {cart.items.length - 2} more</p>}
+                  <div key={cart._id} className="p-6 border border-slate-200 rounded-2xl bg-white hover:border-yellow-400 transition-all group relative">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="text-4xl">📁</div>
+                      <div>
+                        <h4 className="font-bold text-slate-800">{cart.user?.name || 'Anonymous'}'s Cart</h4>
+                        <p className="text-xs text-slate-500">{cart.items.length} items</p>
+                      </div>
                     </div>
+                    <div className="space-y-2 mb-4 max-h-32 overflow-y-auto">
+                      {cart.items.map((item, idx) => (
+                        <div key={idx} className="text-xs text-slate-600 flex justify-between">
+                          <span>{item.product?.name}</span>
+                          <span>x{item.quantity}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => handleDeleteCart(cart._id)}
+                      className="w-full py-2 text-xs font-bold text-red-600 border border-red-100 rounded-lg hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <span>🗑️</span> Clear Cart
+                    </button>
                   </div>
                 ))}
+                {carts.length === 0 && (
+                  <div className="col-span-full py-12 text-center text-slate-500 italic">
+                    No active carts found
+                  </div>
+                )}
               </div>
             </div>
-          )}
-
+          )} */}
           {/* Orders View */}
           {activeSection === 'orders' && (
             <div className="p-6 overflow-x-auto">
@@ -417,7 +442,7 @@ const Admin = () => {
                       <td className="px-6 py-4 font-semibold text-slate-800">{o.user?.name}</td>
                       <td className="px-6 py-4 font-bold text-yellow-700">₹{o.totalAmount}</td>
                       <td className="px-6 py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${o.status === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${o.status?.toLowerCase() === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
                           }`}>
                           {o.status.toUpperCase()}
                         </span>
@@ -425,6 +450,13 @@ const Admin = () => {
                       <td className="px-6 py-4 text-sm text-slate-500">{new Date(o.createdAt).toLocaleDateString()}</td>
                     </tr>
                   ))}
+                  {orders.length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-20 text-center text-slate-500 italic">
+                        No orders found
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -457,9 +489,26 @@ const Admin = () => {
           )}
 
           {loading && (
-            <div className="p-20 text-center">
-              <div className="animate-spin text-4xl mb-4">🌀</div>
-              <p className="font-serif italic text-slate-500">Retrieving secure data...</p>
+            <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center animate-in fade-in duration-500">
+              <div className="relative">
+                {/* Main Spinner */}
+                <svg className="animate-spin h-16 w-16 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {/* Center Pulse */}
+                <div className="absolute inset-0 m-auto w-4 h-4 bg-yellow-500 rounded-full animate-ping opacity-75"></div>
+              </div>
+              <div className="mt-8 flex flex-col items-center gap-2">
+                <p className="font-serif italic text-xl text-slate-700 font-medium tracking-tight animate-pulse">
+                  Retrieving Secure Data
+                </p>
+                <div className="flex gap-1.5">
+                  <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                  <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                  <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-bounce"></span>
+                </div>
+              </div>
             </div>
           )}
         </div>

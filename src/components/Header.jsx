@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { Heart } from 'lucide-react';
 import { logout } from '../store/slices/authSlice';
@@ -13,6 +13,8 @@ const Header = () => {
     const { products, loading } = useSelector((state) => state.products);
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const location = useLocation();
+    const [searchParams] = useSearchParams();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [showSearchModal, setShowSearchModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -93,6 +95,13 @@ const Header = () => {
 
     const cartItemCount = items?.reduce((total, item) => total + item.quantity, 0) || 0;
 
+    const isActive = (path, category = null) => {
+        if (category) {
+            return location.pathname === '/products' && searchParams.get('category') === category;
+        }
+        return location.pathname === path && !searchParams.get('category');
+    };
+
     return (
         <header className="nav-clean glass-effect sticky top-0 z-50 transition-all duration-300">
             <div className="container">
@@ -105,11 +114,11 @@ const Header = () => {
 
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center gap-10 md:gap-12">
-                        <Link to="/" className="nav-link">Home</Link>
-                        <Link to="/products?category=Jewelry" className="nav-link">Jewellery</Link>
-                        <Link to="/products?category=Sarees" className="nav-link">Sarees</Link>
-                        <Link to="/products?category=Stationery" className="nav-link">Stationery</Link>
-                        <Link to="/contact" className="nav-link">Contact</Link>
+                        <Link to="/" className={`nav-link ${isActive('/') ? 'active font-bold' : ''}`}>Home</Link>
+                        <Link to="/products?category=Jewellery" className={`nav-link ${isActive('/products', 'Jewellery') ? 'active font-bold' : ''}`}>Jewellery</Link>
+                        <Link to="/products?category=Sarees" className={`nav-link ${isActive('/products', 'Sarees') ? 'active font-bold' : ''}`}>Sarees</Link>
+                        <Link to="/products?category=Stationery" className={`nav-link ${isActive('/products', 'Stationery') ? 'active font-bold' : ''}`}>Stationery</Link>
+                        <Link to="/contact" className={`nav-link ${isActive('/contact') ? 'active font-bold' : ''}`}>Contact</Link>
                     </nav>
 
                     {/* Right side - Icons */}
@@ -166,7 +175,7 @@ const Header = () => {
                             <Link to="/wishlist" className="relative text-dark hover:text-gold transition-colors block p-2">
                                 <Heart className="w-5 h-5" strokeWidth={1.5} />
                                 {wishlistItems.length > 0 && (
-                                    <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                                    <span className="badge-premium">
                                         {wishlistItems.length}
                                     </span>
                                 )}
@@ -236,7 +245,7 @@ const Header = () => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                             </svg>
                             {cartItemCount > 0 && (
-                                <span className="absolute -top-2 -right-2 bg-gold text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                                <span className="badge-premium">
                                     {cartItemCount}
                                 </span>
                             )}
@@ -274,13 +283,13 @@ const Header = () => {
                 {mobileMenuOpen && (
                     <div className="md:hidden py-4 border-t border-gray-100 dark:border-gray-700 bg-cream dark:bg-white absolute left-0 right-0 shadow-lg">
                         <nav className="flex flex-col space-y-4 px-6">
-                            <Link to="/" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Home</Link>
-                            <Link to="/products?category=Jewelry" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Jewelry</Link>
-                            <Link to="/products?category=Sarees" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Sarees</Link>
-                            <Link to="/products?category=Stationery" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Stationery</Link>
-                            <Link to="/contact" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
-                            <Link to="/wishlist" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Wishlist</Link>
-                            <Link to="/cart" className="nav-link" onClick={() => setMobileMenuOpen(false)}>Cart</Link>
+                            <Link to="/" className={`nav-link ${isActive('/') ? 'active font-bold' : ''}`} onClick={() => setMobileMenuOpen(false)}>Home</Link>
+                            <Link to="/products?category=Jewellery" className={`nav-link ${isActive('/products', 'Jewellery') ? 'active font-bold' : ''}`} onClick={() => setMobileMenuOpen(false)}>Jewellery</Link>
+                            <Link to="/products?category=Sarees" className={`nav-link ${isActive('/products', 'Sarees') ? 'active font-bold' : ''}`} onClick={() => setMobileMenuOpen(false)}>Sarees</Link>
+                            <Link to="/products?category=Stationery" className={`nav-link ${isActive('/products', 'Stationery') ? 'active font-bold' : ''}`} onClick={() => setMobileMenuOpen(false)}>Stationery</Link>
+                            <Link to="/contact" className={`nav-link ${isActive('/contact') ? 'active font-bold' : ''}`} onClick={() => setMobileMenuOpen(false)}>Contact</Link>
+                            <Link to="/wishlist" className={`nav-link ${isActive('/wishlist') ? 'active font-bold' : ''}`} onClick={() => setMobileMenuOpen(false)}>Wishlist</Link>
+                            <Link to="/cart" className={`nav-link ${isActive('/cart') ? 'active font-bold' : ''}`} onClick={() => setMobileMenuOpen(false)}>Cart</Link>
                             {user ? (
                                 <>
                                     {user.isAdmin && (

@@ -20,9 +20,9 @@ const Home = () => {
     const categories = [
         {
             id: 1,
-            name: 'Jewelry',
+            name: 'Jewellery',
             image: JewelryImg,
-            link: '/products?category=Jewelry'
+            link: '/products?category=Jewellery'
         },
         {
             id: 2,
@@ -77,7 +77,7 @@ const Home = () => {
                                 Shop Collection
                             </Link>
                             <Link
-                                to="/products?category=Jewelry"
+                                to="/products?category=Jewellery"
                                 className="px-8 py-3.5 bg-white/10 backdrop-blur-sm border border-white/30 text-white font-semibold rounded hover:bg-white hover:text-black transition-all transform hover:-translate-y-1"
                             >
                                 View Categories
